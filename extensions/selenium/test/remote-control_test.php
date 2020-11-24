@@ -1,7 +1,7 @@
 <?php
 
-require_once dirname(__FILE__) . '/../../../autorun.php';
-require_once dirname(__FILE__) . '/../remote-control.php';
+require_once __DIR__ . '/../../../src/autorun.php';
+require_once __DIR__ . '/../remote-control.php';
 
 class TestOfSimpleSeleniumRemoteControl extends UnitTestCase
 {

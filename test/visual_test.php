@@ -4,17 +4,14 @@
 // Some of these tests are designed to fail! Do not be alarmed.
 //                         ----------------
 
-// The following tests are a bit hacky. Whilst Kent Beck tried to
-// build a unit tester with a unit tester, I am not that brave.
-// Instead I have just hacked together odd test scripts until
-// I have enough of a tester to procede more formally.
 //
 // The proper tests start in all_tests.php
-require_once '../unit_tester.php';
-require_once '../shell_tester.php';
-require_once '../mock_objects.php';
-require_once '../reporter.php';
-require_once '../xml.php';
+//
+require_once __DIR__.'/../src/unit_tester.php';
+require_once __DIR__.'/../src/shell_tester.php';
+require_once __DIR__.'/../src/mock_objects.php';
+require_once __DIR__.'/../src/reporter.php';
+require_once __DIR__.'/../src/xml.php';
 
 class TestDisplayClass
 {
@@ -86,7 +83,7 @@ class PassingUnitTestCaseOutput extends UnitTestCase
 
     public function testHashEquality()
     {
-        $this->assertEqual(array('a' => 'A', 'b' => 'B'), array('b' => 'B', 'a' => 'A'), '%s -> Pass');
+        $this->assertEqual(['a' => 'A', 'b' => 'B'], ['b' => 'B', 'a' => 'A'], '%s -> Pass');
     }
 
     public function testWithin()
@@ -177,7 +174,7 @@ class PassingUnitTestCaseOutput extends UnitTestCase
     public function testLongStrings()
     {
         $text = '';
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             $text .= '0123456789';
         }
         $this->assertEqual($text, $text);
@@ -244,7 +241,7 @@ class FailingUnitTestCaseOutput extends UnitTestCase
 
     public function testHashEquality()
     {
-        $this->assertEqual(array('a' => 'A', 'b' => 'B'), array('b' => 'B', 'a' => 'Z'), '%s -> Fail');
+        $this->assertEqual(['a' => 'A', 'b' => 'B'], ['b' => 'B', 'a' => 'Z'], '%s -> Fail');
     }
 
     public function testWithin()
@@ -279,7 +276,7 @@ class FailingUnitTestCaseOutput extends UnitTestCase
 
     public function testHashIdentity()
     {
-        $this->assertIdentical(array('a' => 'A', 'b' => 'B'), array('b' => 'B', 'a' => 'A'), '%s -> fail');        // Fail.
+        $this->assertIdentical(['a' => 'A', 'b' => 'B'], ['b' => 'B', 'a' => 'A'], '%s -> fail');        // Fail.
     }
 
     public function testObjectEquality()
@@ -318,10 +315,10 @@ class FailingUnitTestCaseOutput extends UnitTestCase
     public function testLongStrings()
     {
         $text = '';
-        for ($i = 0; $i < 10; $i++) {
+        for ($i = 0; $i < 10; ++$i) {
             $text .= '0123456789';
         }
-        $this->assertEqual($text . $text, $text . 'a' . $text);        // Fail.
+        $this->assertEqual($text.$text, $text.'a'.$text);        // Fail.
     }
 }
 
@@ -358,7 +355,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testEmptyMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array());
+        $dummy->expect('a', []);
         $dummy->a();
         $dummy->a(null);        // Fail.
     }
@@ -366,7 +363,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testEmptyMatchingWithCustomMessage()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(), 'My expectation message: %s');
+        $dummy->expect('a', [], 'My expectation message: %s');
         $dummy->a();
         $dummy->a(null);        // Fail.
     }
@@ -374,7 +371,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testNullMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(null));
+        $dummy->expect('a', [null]);
         $dummy->a(null);
         $dummy->a();        // Fail.
     }
@@ -382,7 +379,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testBooleanMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(true, false));
+        $dummy->expect('a', [true, false]);
         $dummy->a(true, false);
         $dummy->a(true, true);        // Fail.
     }
@@ -390,7 +387,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testIntegerMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(32, 33));
+        $dummy->expect('a', [32, 33]);
         $dummy->a(32, 33);
         $dummy->a(32, 34);        // Fail.
     }
@@ -398,7 +395,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testFloatMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(3.2, 3.3));
+        $dummy->expect('a', [3.2, 3.3]);
         $dummy->a(3.2, 3.3);
         $dummy->a(3.2, 3.4);        // Fail.
     }
@@ -406,7 +403,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testStringMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array('32', '33'));
+        $dummy->expect('a', ['32', '33']);
         $dummy->a('32', '33');
         $dummy->a('32', '34');        // Fail.
     }
@@ -415,9 +412,10 @@ class TestOfMockObjectsOutput extends UnitTestCase
     {
         $dummy = new MockDummy();
         $dummy->expect(
-                'a',
-                array(new EqualExpectation('A', 'My part expectation message: %s')),
-                'My expectation message: %s');
+            'a',
+            [new EqualExpectation('A', 'My part expectation message: %s')],
+            'My expectation message: %s'
+        );
         $dummy->a('A');
         $dummy->a('B');        // Fail.
     }
@@ -425,19 +423,19 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testArrayMatching()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(array(32), array(33)));
-        $dummy->a(array(32), array(33));
-        $dummy->a(array(32), array('33'));        // Fail.
+        $dummy->expect('a', [[32], [33]]);
+        $dummy->a([32], [33]);
+        $dummy->a([32], ['33']);        // Fail.
     }
 
     public function testObjectMatching()
     {
-        $a     = new Dummy();
-        $a->a  = 'a';
-        $b     = new Dummy();
-        $b->b  = 'b';
+        $a = new Dummy();
+        $a->a = 'a';
+        $b = new Dummy();
+        $b->b = 'b';
         $dummy = new MockDummy();
-        $dummy->expect('a', array($a, $b));
+        $dummy->expect('a', [$a, $b]);
         $dummy->a($a, $b);
         $dummy->a($a, $a);        // Fail.
     }
@@ -445,7 +443,7 @@ class TestOfMockObjectsOutput extends UnitTestCase
     public function testBigList()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array(false, 0, 1, 1.0));
+        $dummy->expect('a', [false, 0, 1, 1.0]);
         $dummy->a(false, 0, 1, 1.0);
         $dummy->a(true, false, 2, 2.0);        // Fail.
     }
@@ -455,16 +453,16 @@ class TestOfPastBugs extends UnitTestCase
 {
     public function testMixedTypes()
     {
-        $this->assertEqual(array(), null, '%s -> Pass');
-        $this->assertIdentical(array(), null, '%s -> Fail');    // Fail.
+        $this->assertEqual([], null, '%s -> Pass');
+        $this->assertIdentical([], null, '%s -> Fail');    // Fail.
     }
 
     public function testMockWildcards()
     {
         $dummy = new MockDummy();
-        $dummy->expect('a', array('*', array(33)));
-        $dummy->a(array(32), array(33));
-        $dummy->a(array(32), array('33'));        // Fail.
+        $dummy->expect('a', ['*', [33]]);
+        $dummy->a([32], [33]);
+        $dummy->a([32], ['33']);        // Fail.
     }
 }
 
@@ -489,26 +487,26 @@ class PassesAsWellReporter extends HtmlReporter
 {
     protected function getCss()
     {
-        return parent::getCss() . ' .pass { color: darkgreen; }';
+        return parent::getCss().' .pass { color: darkgreen; }';
     }
 
     public function paintPass($message)
     {
         parent::paintPass($message);
-        print '<span class="pass">Pass</span>: ';
+        echo '<span class="pass">Pass</span>: ';
         $breadcrumb = $this->getTestList();
         array_shift($breadcrumb);
-        print implode(' -&gt; ', $breadcrumb);
-        print ' -&gt; ' . htmlentities($message) . "<br />\n";
+        echo implode(' -&gt; ', $breadcrumb);
+        echo ' -&gt; '.htmlentities($message)."<br />\n";
     }
 
     public function paintSignal($type, $payload)
     {
-        print "<span class=\"fail\">$type</span>: ";
+        echo "<span class=\"fail\">$type</span>: ";
         $breadcrumb = $this->getTestList();
         array_shift($breadcrumb);
-        print implode(' -&gt; ', $breadcrumb);
-        print ' -&gt; ' . htmlentities(serialize($payload)) . "<br />\n";
+        echo implode(' -&gt; ', $breadcrumb);
+        echo ' -&gt; '.htmlentities(serialize($payload))."<br />\n";
     }
 }
 
@@ -582,14 +580,14 @@ $test->add(new TestOfSkippingOrElse());
 $test->add(new TestOfSkippingTwiceOver());
 $test->add(new TestThatShouldNotBeSkipped());
 
-if (isset($_GET['xml']) || in_array('xml', (isset($argv) ? $argv : array()))) {
+if (isset($_GET['xml']) || in_array('xml', ($argv ?? []))) {
     $reporter = new XmlReporter();
 } elseif (TextReporter::inCli()) {
     $reporter = new TextReporter();
 } else {
     $reporter = new PassesAsWellReporter();
 }
-if (isset($_GET['dry']) || in_array('dry', (isset($argv) ? $argv : array()))) {
+if (isset($_GET['dry']) || in_array('dry', ($argv ?? []))) {
     $reporter->makeDry();
 }
 exit($test->run($reporter) ? 0 : 1);

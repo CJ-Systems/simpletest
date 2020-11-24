@@ -1,9 +1,10 @@
 <?php
 
-require_once dirname(__FILE__) . '/../autorun.php';
-require_once dirname(__FILE__) . '/../expectation.php';
-require_once dirname(__FILE__) . '/../http.php';
-require_once dirname(__FILE__) . '/../page.php';
+require_once __DIR__.'/../src/autorun.php';
+require_once __DIR__.'/../src/expectation.php';
+require_once __DIR__.'/../src/http.php';
+require_once __DIR__.'/../src/page.php';
+
 Mock::generate('SimpleHttpHeaders');
 Mock::generate('SimpleHttpResponse');
 
@@ -20,7 +21,7 @@ class TestOfPageInterface extends UnitTestCase
         $this->assertIdentical($page->getAuthentication(), false);
         $this->assertIdentical($page->getRealm(), false);
         $this->assertFalse($page->hasFrames());
-        $this->assertIdentical($page->getUrls(), array());
+        $this->assertIdentical($page->getUrls(), []);
         $this->assertIdentical($page->getTitle(), false);
     }
 }
@@ -35,12 +36,12 @@ class TestOfPageHeaders extends UnitTestCase
         $response->returnsByValue('getHeaders', $headers);
         $response->returnsByValue('getMethod', 'POST');
         $response->returnsByValue('getUrl', new SimpleUrl('here'));
-        $response->returnsByValue('getRequestData', array('a' => 'A'));
+        $response->returnsByValue('getRequestData', ['a' => 'A']);
 
         $page = new SimplePage($response);
         $this->assertEqual($page->getMethod(), 'POST');
         $this->assertEqual($page->getUrl(), new SimpleUrl('here'));
-        $this->assertEqual($page->getRequestData(), array('a' => 'A'));
+        $this->assertEqual($page->getRequestData(), ['a' => 'A']);
     }
 
     public function testTransportError()
@@ -108,76 +109,88 @@ class TestOfHtmlStrippingAndNormalisation extends UnitTestCase
     public function testImageSuppressionWhileKeepingParagraphsAndAltText()
     {
         $this->assertEqual(
-                SimplePage::normalise('<img src="foo.png" /><p>some text</p><img src="bar.png" alt="bar" />'),
-                'some text bar');
+            SimplePage::normalise('<img src="foo.png" /><p>some text</p><img src="bar.png" alt="bar" />'),
+            'some text bar'
+        );
     }
 
     public function testSpaceNormalisation()
     {
         $this->assertEqual(
-                SimplePage::normalise("\nOne\tTwo   \nThree\t"),
-                'One Two Three');
+            SimplePage::normalise("\nOne\tTwo   \nThree\t"),
+            'One Two Three'
+        );
     }
 
     public function testMultilinesCommentSuppression()
     {
         $this->assertEqual(
-                SimplePage::normalise('<!--\n Hello \n-->'),
-                '');
+            SimplePage::normalise('<!--\n Hello \n-->'),
+            ''
+        );
     }
 
     public function testCommentSuppression()
     {
         $this->assertEqual(
-                SimplePage::normalise('<!--Hello-->'),
-                '');
+            SimplePage::normalise('<!--Hello-->'),
+            ''
+        );
     }
 
     public function testJavascriptSuppression()
     {
         $this->assertEqual(
-                SimplePage::normalise('<script attribute="test">\nHello\n</script>'),
-                '');
+            SimplePage::normalise('<script attribute="test">\nHello\n</script>'),
+            ''
+        );
         $this->assertEqual(
-                SimplePage::normalise('<script attribute="test">Hello</script>'),
-                '');
+            SimplePage::normalise('<script attribute="test">Hello</script>'),
+            ''
+        );
         $this->assertEqual(
-                SimplePage::normalise('<script>Hello</script>'),
-                '');
+            SimplePage::normalise('<script>Hello</script>'),
+            ''
+        );
     }
 
     public function testTagSuppression()
     {
         $this->assertEqual(
-                SimplePage::normalise('<b>Hello</b>'),
-                'Hello');
+            SimplePage::normalise('<b>Hello</b>'),
+            'Hello'
+        );
     }
 
     public function testAdjoiningTagSuppression()
     {
         $this->assertEqual(
-                SimplePage::normalise('<b>Hello</b><em>Goodbye</em>'),
-                'HelloGoodbye');
+            SimplePage::normalise('<b>Hello</b><em>Goodbye</em>'),
+            'HelloGoodbye'
+        );
     }
 
     public function testExtractImageAltTextWithDifferentQuotes()
     {
         $this->assertEqual(
-                SimplePage::normalise('<img alt="One"><img alt=\'Two\'><img alt=Three>'),
-                'One Two Three');
+            SimplePage::normalise('<img alt="One"><img alt=\'Two\'><img alt=Three>'),
+            'One Two Three'
+        );
     }
 
     public function testExtractImageAltTextMultipleTimes()
     {
         $this->assertEqual(
-                SimplePage::normalise('<img alt="One"><img alt="Two"><img alt="Three">'),
-                'One Two Three');
+            SimplePage::normalise('<img alt="One"><img alt="Two"><img alt="Three">'),
+            'One Two Three'
+        );
     }
 
     public function testHtmlEntityTranslation()
     {
         $this->assertEqual(
-                SimplePage::normalise('&lt;&gt;&quot;&amp;&#039;'),
-                '<>"&\'');
+            SimplePage::normalise('&lt;&gt;&quot;&amp;&#039;'),
+            '<>"&\''
+        );
     }
 }

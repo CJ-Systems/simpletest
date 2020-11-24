@@ -1,59 +1,61 @@
 <?php
 
-require_once dirname(__FILE__) . '/../autorun.php';
-require_once dirname(__FILE__) . '/../arguments.php';
+require_once __DIR__.'/../src/autorun.php';
+require_once __DIR__.'/../src/arguments.php';
 
 class TestOfCommandLineArgumentParsing extends UnitTestCase
 {
     public function testArgumentListWithJustProgramNameGivesFalseToEveryName()
     {
-        $arguments = new SimpleArguments(array('me'));
+        $arguments = new SimpleArguments(['me']);
         $this->assertIdentical($arguments->a, false);
-        $this->assertIdentical($arguments->all(), array());
+        $this->assertIdentical($arguments->all(), []);
     }
 
     public function testSingleArgumentNameRecordedAsTrue()
     {
-        $arguments = new SimpleArguments(array('me', '-a'));
+        $arguments = new SimpleArguments(['me', '-a']);
         $this->assertIdentical($arguments->a, true);
     }
 
     public function testSingleArgumentCanBeGivenAValue()
     {
-        $arguments = new SimpleArguments(array('me', '-a=AAA'));
+        $arguments = new SimpleArguments(['me', '-a=AAA']);
         $this->assertIdentical($arguments->a, 'AAA');
     }
 
     public function testSingleArgumentCanBeGivenSpaceSeparatedValue()
     {
-        $arguments = new SimpleArguments(array('me', '-a', 'AAA'));
+        $arguments = new SimpleArguments(['me', '-a', 'AAA']);
         $this->assertIdentical($arguments->a, 'AAA');
     }
 
     public function testWillBuildArrayFromRepeatedValue()
     {
-        $arguments = new SimpleArguments(array('me', '-a', 'A', '-a', 'AA'));
-        $this->assertIdentical($arguments->a, array('A', 'AA'));
+        $arguments = new SimpleArguments(['me', '-a', 'A', '-a', 'AA']);
+        $this->assertIdentical($arguments->a, ['A', 'AA']);
     }
 
     public function testWillBuildArrayFromMultiplyRepeatedValues()
     {
-        $arguments = new SimpleArguments(array('me', '-a', 'A', '-a', 'AA', '-a', 'AAA'));
-        $this->assertIdentical($arguments->a, array('A', 'AA', 'AAA'));
+        $arguments = new SimpleArguments(['me', '-a', 'A', '-a', 'AA', '-a', 'AAA']);
+        $this->assertIdentical($arguments->a, ['A', 'AA', 'AAA']);
     }
 
     public function testCanParseLongFormArguments()
     {
-        $arguments = new SimpleArguments(array('me', '--aa=AA', '--bb', 'BB'));
+        $arguments = new SimpleArguments(['me', '--aa=AA', '--bb', 'BB']);
         $this->assertIdentical($arguments->aa, 'AA');
         $this->assertIdentical($arguments->bb, 'BB');
     }
 
     public function testGetsFullSetOfResultsAsHash()
     {
-        $arguments = new SimpleArguments(array('me', '-a', '-b=1', '-b', '2', '--aa=AA', '--bb', 'BB', '-c'));
-        $this->assertEqual($arguments->all(),
-                           array('a' => true, 'b' => array('1', '2'), 'aa' => 'AA', 'bb' => 'BB', 'c' => true));
+        $arguments = new SimpleArguments(['me', '-a', '-b=1', '-b', '2', '--aa=AA', '--bb', 'BB', '-c']);
+        $this->assertEqual(
+            $arguments->all(),
+            ['a' => true, 'b' => ['1', '2'], 'aa' => 'AA', 'bb' => 'BB', 'c' => true]
+        );
     }
 }
 
@@ -83,14 +85,16 @@ class TestOfHelpOutput extends UnitTestCase
         $help = new SimpleHelp('Cool program');
         $help->explainFlag('a', 'Enables A');
         $help->explainFlag('long', 'Enables Long');
-        $this->assertEqual($help->render(),
-                           "Cool program\n-a        Enables A\n--long    Enables Long\n");
+        $this->assertEqual(
+            $help->render(),
+            "Cool program\n-a        Enables A\n--long    Enables Long\n"
+        );
     }
 
     public function testCanDisplaysMultipleFlagsForEachOption()
     {
         $help = new SimpleHelp('Cool program');
-        $help->explainFlag(array('a', 'aa'), 'Enables A');
+        $help->explainFlag(['a', 'aa'], 'Enables A');
         $this->assertEqual($help->render(), "Cool program\n-a      Enables A\n  --aa\n");
     }
 }

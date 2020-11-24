@@ -8,14 +8,11 @@ language: php
 # use container based infrastructure (no sudo possible)
 sudo: false
 
-addons:
-  apt:
-    packages:
-      - parallel
-
-php: [5.5, 5.6, 7, 7.1]
+php: [7.2, 7.3, 7.4]
 
 matrix:
+    allow_failures:	
+        - php: 7.4
     fast_finish: true
 
 script:
@@ -23,7 +20,7 @@ script:
   - >
     echo;
     echo "Running PHP lint";
-    find . -name \*.php ! -path "./vendor/*" ! -name "test_with_parse_error.php" | parallel --gnu php -d display_errors=stderr -l {} > /dev/null \;
+    find . -path ./vendor -prune -o -type f -name '*.php' ! -name "test_with_parse_error.php" -print0 | xargs -0 -n1 -P4 php -l -n | (! grep -v "No syntax errors detected" )
   # start PHP5.4 built-in server in background
   - nohup php -S localhost:8080 -t test/site > php-server.log 2>&1 &
   - php test/all_tests.php
