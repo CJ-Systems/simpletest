@@ -2,7 +2,22 @@
 
 ## [Unreleased]
 
-**currently working on: fixing mock objects & references**
+**Currently working on: ...**
+
+* new folder structure
+  - moved source files into "src/", adjusted file includes accordingly
+* updated php-cs-fixer config file (`.php_cs`)
+* incremental code-style refactorings
+  - use short array syntax, "array() => []"
+  - removed superfluous phpdoc tags
+  - trim blank lines on phpdoc blocks
+  - removed @access declarations from phpdoc blocks
+  - space after exclamation mark, "! $value"
+  - renamed phpdoc type name boolean to shorter bool, "boolean => bool"
+  - switch from post to pre increments on loops, "$i++ => ++$i"
+* added `.editorconfig`
+
+## [1.2.0] - 2019-09-17
 
 * [PR#46] added import / export cookies functions
    - Browser: getCookies() & setCookies($cookies)
@@ -25,6 +40,8 @@
 * fixed #17 - Access to original constructor in mocks (@mal)
 * fixed return "exit code" of true/1, when tests are passing
 * fixed #14 - Add support for mocking variadic methods (@36degrees)
+* added support for inputs of type date and time
+* changed minimum PHP requirement to 7.1+ (dropped support for PHP 5) 
 
 ## [1.1.7] - 2015-09-21
 
@@ -33,7 +50,8 @@
 * removed PHP4 reflection support
 * removed PHP4 compatibility layer
 
-[Unreleased]: https://github.com/simpletest/simpletest/compare/v1.1.7...HEAD
-[1.1.7]: https://github.com/simpletest/simpletest/compare/v1.1.7...v1.1.6
+[Unreleased]: https://github.com/simpletest/simpletest/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/simpletest/simpletest/compare/v1.1.7...v1.2.0
+[1.1.7]: https://github.com/simpletest/simpletest/compare/v1.1.6...v1.1.7
 
 [PR#46]: https://github.com/simpletest/simpletest/pull/46

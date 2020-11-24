@@ -1,9 +1,10 @@
 <?php
 
-require_once dirname(__FILE__) . '/../autorun.php';
-require_once dirname(__FILE__) . '/../page.php';
-require_once dirname(__FILE__) . '/../php_parser.php';
-require_once dirname(__FILE__) . '/../tidy_parser.php';
+require_once __DIR__.'/../src/autorun.php';
+require_once __DIR__.'/../src/page.php';
+require_once __DIR__.'/../src/php_parser.php';
+require_once __DIR__.'/../src/tidy_parser.php';
+
 Mock::generate('SimpleHttpResponse');
 
 abstract class TestOfParsing extends UnitTestCase
@@ -30,211 +31,236 @@ abstract class TestOfParsing extends UnitTestCase
     public function testPageWithNoUrlsGivesEmptyArrayOfLinks()
     {
         $page = $this->whenVisiting('http://here/', '<html><body><p>Stuff</p></body></html>');
-        $this->assertIdentical($page->getUrls(), array());
+        $this->assertIdentical($page->getUrls(), []);
     }
 
     public function testAddAbsoluteLink()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><a href="http://somewhere.com">Label</a></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><a href="http://somewhere.com">Label</a></html>'
+        );
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://somewhere.com')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://somewhere.com')]
+        );
     }
 
     public function testUrlLabelsHaveHtmlTagsStripped()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><a href="http://somewhere.com"><b>Label</b></a></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><a href="http://somewhere.com"><b>Label</b></a></html>'
+        );
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://somewhere.com')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://somewhere.com')]
+        );
     }
 
     public function testAddStrictRelativeLink()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><a href="./somewhere.php">Label</a></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><a href="./somewhere.php">Label</a></html>'
+        );
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://host/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://host/somewhere.php')]
+        );
     }
 
     public function testAddBareRelativeLink()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><a href="somewhere.php">Label</a></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><a href="somewhere.php">Label</a></html>'
+        );
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://host/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://host/somewhere.php')]
+        );
     }
 
     public function testAddRelativeLinkWithBaseTag()
     {
-        $raw = '<html><head><base href="http://www.lastcraft.com/stuff/"></head>' .
-               '<body><a href="somewhere.php">Label</a></body>' .
+        $raw = '<html><head><base href="http://www.lastcraft.com/stuff/"></head>'.
+               '<body><a href="somewhere.php">Label</a></body>'.
                '</html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://www.lastcraft.com/stuff/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://www.lastcraft.com/stuff/somewhere.php')]
+        );
     }
 
     public function testAddAbsoluteLinkWithBaseTag()
     {
-        $raw = '<html><head><base href="http://www.lastcraft.com/stuff/"></head>' .
-               '<body><a href="http://here.com/somewhere.php">Label</a></body>' .
+        $raw = '<html><head><base href="http://www.lastcraft.com/stuff/"></head>'.
+               '<body><a href="http://here.com/somewhere.php">Label</a></body>'.
                '</html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://here.com/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://here.com/somewhere.php')]
+        );
     }
 
     public function testCanFindLinkInsideForm()
     {
-        $raw  = '<html><body><form><a href="./somewhere.php">Label</a></form></body></html>';
+        $raw = '<html><body><form><a href="./somewhere.php">Label</a></form></body></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://host/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://host/somewhere.php')]
+        );
     }
 
     public function testCanGetLinksByIdOrLabel()
     {
-        $raw  = '<html><body><a href="./somewhere.php" id="33">Label</a></body></html>';
+        $raw = '<html><body><a href="./somewhere.php" id="33">Label</a></body></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                $page->getUrlsByLabel('Label'),
-                array(new SimpleUrl('http://host/somewhere.php')));
+            $page->getUrlsByLabel('Label'),
+            [new SimpleUrl('http://host/somewhere.php')]
+        );
         $this->assertFalse($page->getUrlById(0));
         $this->assertEqual(
-                $page->getUrlById(33),
-                new SimpleUrl('http://host/somewhere.php'));
+            $page->getUrlById(33),
+            new SimpleUrl('http://host/somewhere.php')
+        );
     }
 
     public function testCanFindLinkByNormalisedLabel()
     {
-        $raw  = '<html><body><a href="./somewhere.php" id="33"><em>Long &amp; thin</em></a></body></html>';
+        $raw = '<html><body><a href="./somewhere.php" id="33"><em>Long &amp; thin</em></a></body></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                $page->getUrlsByLabel('Long & thin'),
-                array(new SimpleUrl('http://host/somewhere.php')));
+            $page->getUrlsByLabel('Long & thin'),
+            [new SimpleUrl('http://host/somewhere.php')]
+        );
     }
 
     public function testCanFindLinkByImageAltText()
     {
-        $raw  = '<a href="./somewhere.php" id="33"><img src="pic.jpg" alt="&lt;A picture&gt;"></a>';
+        $raw = '<a href="./somewhere.php" id="33"><img src="pic.jpg" alt="&lt;A picture&gt;"></a>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual(
-                array_map(array($this, 'urlToString'), $page->getUrlsByLabel('<A picture>')),
-                array('http://host/somewhere.php'));
+            array_map([$this, 'urlToString'], $page->getUrlsByLabel('<A picture>')),
+            ['http://host/somewhere.php']
+        );
     }
 
     public function testTitle()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><head><title>Me</title></head></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><head><title>Me</title></head></html>'
+        );
         $this->assertEqual($page->getTitle(), 'Me');
     }
 
     public function testTitleWithEntityReference()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><head><Title>Me&amp;Me</TITLE></head></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><head><Title>Me&amp;Me</TITLE></head></html>'
+        );
         $this->assertEqual($page->getTitle(), 'Me&Me');
     }
 
     public function testOnlyFramesInFramesetAreRecognised()
     {
         $raw =
-            '<frameset>' .
-            '  <frame src="2.html"></frame>' .
-            '  <frame src="3.html"></frame>' .
-            '</frameset>' .
+            '<frameset>'.
+            '  <frame src="2.html"></frame>'.
+            '  <frame src="3.html"></frame>'.
+            '</frameset>'.
             '<frame src="4.html"></frame>';
         $page = $this->whenVisiting('http://here', $raw);
         $this->assertTrue($page->hasFrames());
-        $this->assertSameFrameset($page->getFrameset(), array(
+        $this->assertSameFrameset($page->getFrameset(), [
                 1 => new SimpleUrl('http://here/2.html'),
-                2 => new SimpleUrl('http://here/3.html')));
+                2 => new SimpleUrl('http://here/3.html'), ]);
     }
 
     public function testReadsNamesInFrames()
     {
         $raw =
-            '<frameset>' .
-            '  <frame src="1.html"></frame>' .
-            '  <frame src="2.html" name="A"></frame>' .
-            '  <frame src="3.html" name="B"></frame>' .
-            '  <frame src="4.html"></frame>' .
+            '<frameset>'.
+            '  <frame src="1.html"></frame>'.
+            '  <frame src="2.html" name="A"></frame>'.
+            '  <frame src="3.html" name="B"></frame>'.
+            '  <frame src="4.html"></frame>'.
             '</frameset>';
         $page = $this->whenVisiting('http://here', $raw);
         $this->assertTrue($page->hasFrames());
-        $this->assertSameFrameset($page->getFrameset(), array(
-                1   => new SimpleUrl('http://here/1.html'),
+        $this->assertSameFrameset($page->getFrameset(), [
+                1 => new SimpleUrl('http://here/1.html'),
                 'A' => new SimpleUrl('http://here/2.html'),
                 'B' => new SimpleUrl('http://here/3.html'),
-                4   => new SimpleUrl('http://here/4.html')));
+                4 => new SimpleUrl('http://here/4.html'), ]);
     }
 
     public function testRelativeFramesRespectBaseTag()
     {
-        $raw  = '<base href="https://there.com/stuff/"><frameset><frame src="1.html"></frameset>';
+        $raw = '<base href="https://there.com/stuff/"><frameset><frame src="1.html"></frameset>';
         $page = $this->whenVisiting('http://here', $raw);
         $this->assertSameFrameset(
-                $page->getFrameset(),
-                array(1 => new SimpleUrl('https://there.com/stuff/1.html')));
+            $page->getFrameset(),
+            [1 => new SimpleUrl('https://there.com/stuff/1.html')]
+        );
     }
 
     public function testSingleFrameInNestedFrameset()
     {
-        $raw = '<html><frameset><frameset>' .
-                '<frame src="a.html">' .
+        $raw = '<html><frameset><frameset>'.
+                '<frame src="a.html">'.
                 '</frameset></frameset></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertTrue($page->hasFrames());
         $this->assertIdentical(
-                $page->getFrameset(),
-                array(1 => new SimpleUrl('http://host/a.html')));
+            $page->getFrameset(),
+            [1 => new SimpleUrl('http://host/a.html')]
+        );
     }
 
     public function testFramesCollectedWithNestedFramesetTags()
     {
-        $raw = '<html><frameset>' .
-                '<frame src="a.html">' .
-                '<frameset><frame src="b.html"></frameset>' .
-                '<frame src="c.html">' .
+        $raw = '<html><frameset>'.
+                '<frame src="a.html">'.
+                '<frameset><frame src="b.html"></frameset>'.
+                '<frame src="c.html">'.
                 '</frameset></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertTrue($page->hasFrames());
-        $this->assertIdentical($page->getFrameset(), array(
+        $this->assertIdentical($page->getFrameset(), [
                 1 => new SimpleUrl('http://host/a.html'),
                 2 => new SimpleUrl('http://host/b.html'),
-                3 => new SimpleUrl('http://host/c.html')));
+                3 => new SimpleUrl('http://host/c.html'), ]);
     }
 
     public function testNamedFrames()
     {
-        $raw = '<html><frameset>' .
-                '<frame src="a.html">' .
-                '<frame name="_one" src="b.html">' .
-                '<frame src="c.html">' .
-                '<frame src="d.html" name="_two">' .
+        $raw = '<html><frameset>'.
+                '<frame src="a.html">'.
+                '<frame name="_one" src="b.html">'.
+                '<frame src="c.html">'.
+                '<frame src="d.html" name="_two">'.
                 '</frameset></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertTrue($page->hasFrames());
-        $this->assertIdentical($page->getFrameset(), array(
-                1      => new SimpleUrl('http://host/a.html'),
+        $this->assertIdentical($page->getFrameset(), [
+                1 => new SimpleUrl('http://host/a.html'),
                 '_one' => new SimpleUrl('http://host/b.html'),
-                3      => new SimpleUrl('http://host/c.html'),
-                '_two' => new SimpleUrl('http://host/d.html')));
+                3 => new SimpleUrl('http://host/c.html'),
+                '_two' => new SimpleUrl('http://host/d.html'), ]);
     }
 
     public function testCanReadElementOfCompleteForm()
     {
-        $raw = '<html><head><form>' .
-                '<input type="text" name="here" value="Hello">' .
+        $raw = '<html><head><form>'.
+                '<input type="text" name="here" value="Hello">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('here')), 'Hello');
@@ -242,8 +268,8 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testCanReadElementOfUnclosedForm()
     {
-        $raw = '<html><head><form>' .
-                '<input type="text" name="here" value="Hello">' .
+        $raw = '<html><head><form>'.
+                '<input type="text" name="here" value="Hello">'.
                 '</head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('here')), 'Hello');
@@ -251,8 +277,8 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testCanReadElementByLabel()
     {
-        $raw = '<html><head><form>' .
-                '<label>Where<input type="text" name="here" value="Hello"></label>' .
+        $raw = '<html><head><form>'.
+                '<label>Where<input type="text" name="here" value="Hello"></label>'.
                 '</head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('Where')), 'Hello');
@@ -260,63 +286,71 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testCanFindFormByLabel()
     {
-        $raw  = '<html><head><form><input type="submit"></form></head></html>';
+        $raw = '<html><head><form><input type="submit"></form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertNull($page->getFormBySubmit(new SelectByLabel('submit')));
         $this->assertNull($page->getFormBySubmit(new SelectByName('submit')));
         $this->assertIsA(
-                $page->getFormBySubmit(new SelectByLabel('Submit')),
-                'SimpleForm');
+            $page->getFormBySubmit(new SelectByLabel('Submit')),
+            'SimpleForm'
+        );
     }
 
     public function testConfirmSubmitAttributesAreCaseSensitive()
     {
-        $raw  = '<html><head><FORM><INPUT TYPE="SUBMIT" NAME="S" VALUE="S"></FORM></head></html>';
+        $raw = '<html><head><FORM><INPUT TYPE="SUBMIT" NAME="S" VALUE="S"></FORM></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertIsA(
-                $page->getFormBySubmit(new SelectByName('S')),
-                'SimpleForm');
+            $page->getFormBySubmit(new SelectByName('S')),
+            'SimpleForm'
+        );
         $this->assertIsA(
-                $page->getFormBySubmit(new SelectByLabel('S')),
-                'SimpleForm');
+            $page->getFormBySubmit(new SelectByLabel('S')),
+            'SimpleForm'
+        );
     }
 
     public function testCanFindFormByImage()
     {
-        $raw = '<html><head><form>' .
-                '<input type="image" id=100 alt="Label" name="me">' .
+        $raw = '<html><head><form>'.
+                '<input type="image" id=100 alt="Label" name="me">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertIsA(
-                $page->getFormByImage(new SelectByLabel('Label')),
-                'SimpleForm');
+            $page->getFormByImage(new SelectByLabel('Label')),
+            'SimpleForm'
+        );
         $this->assertIsA(
-                $page->getFormByImage(new SelectByName('me')),
-                'SimpleForm');
+            $page->getFormByImage(new SelectByName('me')),
+            'SimpleForm'
+        );
         $this->assertIsA(
-                $page->getFormByImage(new SelectById(100)),
-                'SimpleForm');
+            $page->getFormByImage(new SelectById(100)),
+            'SimpleForm'
+        );
     }
 
     public function testCanFindFormByButtonTag()
     {
-        $raw = '<html><head><form>' .
-                '<button type="submit" name="b" value="B">BBB</button>' .
+        $raw = '<html><head><form>'.
+                '<button type="submit" name="b" value="B">BBB</button>'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertNull($page->getFormBySubmit(new SelectByLabel('b')));
         $this->assertNull($page->getFormBySubmit(new SelectByLabel('B')));
         $this->assertIsA(
-                $page->getFormBySubmit(new SelectByName('b')),
-                'SimpleForm');
+            $page->getFormBySubmit(new SelectByName('b')),
+            'SimpleForm'
+        );
         $this->assertIsA(
-                $page->getFormBySubmit(new SelectByLabel('BBB')),
-                'SimpleForm');
+            $page->getFormBySubmit(new SelectByLabel('BBB')),
+            'SimpleForm'
+        );
     }
 
     public function testCanFindFormById()
     {
-        $raw  = '<html><head><form id="55"><input type="submit"></form></head></html>';
+        $raw = '<html><head><form id="55"><input type="submit"></form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertNull($page->getFormById(54));
         $this->assertIsA($page->getFormById(55), 'SimpleForm');
@@ -324,14 +358,15 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testFormCanBeSubmitted()
     {
-        $raw = '<html><head><form method="GET" action="here.php">' .
-                '<input type="submit" name="s" value="Submit">' .
+        $raw = '<html><head><form method="GET" action="here.php">'.
+                '<input type="submit" name="s" value="Submit">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $form = $page->getFormBySubmit(new SelectByLabel('Submit'));
         $this->assertEqual(
-                $form->submitButton(new SelectByLabel('Submit')),
-                new SimpleGetEncoding(array('s' => 'Submit')));
+            $form->submitButton(new SelectByLabel('Submit')),
+            new SimpleGetEncoding(['s' => 'Submit'])
+        );
     }
 
     public function testUnparsedTagDoesNotCrash()
@@ -342,9 +377,9 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testReadingTextField()
     {
-        $raw = '<html><head><form>' .
-                '<input type="text" name="a">' .
-                '<input type="text" name="b" value="bbb" id=3>' .
+        $raw = '<html><head><form>'.
+                '<input type="text" name="a">'.
+                '<input type="text" name="b" value="bbb" id=3>'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertNull($page->getField(new SelectByName('missing')));
@@ -354,16 +389,16 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testEntitiesAreDecodedInDefaultTextFieldValue()
     {
-        $raw  = '<form><input type="text" name="a" value="&amp;\'&quot;&lt;&gt;"></form>';
+        $raw = '<form><input type="text" name="a" value="&amp;\'&quot;&lt;&gt;"></form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), '&\'"<>');
     }
 
     public function testReadingTextFieldIsCaseInsensitive()
     {
-        $raw = '<html><head><FORM>' .
-                '<INPUT TYPE="TEXT" NAME="a">' .
-                '<INPUT TYPE="TEXT" NAME="b" VALUE="bbb" id=3>' .
+        $raw = '<html><head><FORM>'.
+                '<INPUT TYPE="TEXT" NAME="a">'.
+                '<INPUT TYPE="TEXT" NAME="b" VALUE="bbb" id=3>'.
                 '</FORM></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertNull($page->getField(new SelectByName('missing')));
@@ -373,10 +408,10 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingTextField()
     {
-        $raw = '<html><head><form>' .
-                '<input type="text" name="a">' .
-                '<input type="text" name="b" id=3>' .
-                '<input type="submit">' .
+        $raw = '<html><head><form>'.
+                '<input type="text" name="a">'.
+                '<input type="text" name="b" id=3>'.
+                '<input type="submit">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertTrue($page->setField(new SelectByName('a'), 'aaa'));
@@ -389,10 +424,10 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingTextFieldByEnclosingLabel()
     {
-        $raw = '<html><head><form>' .
-                '<label>Stuff' .
-                '<input type="text" name="a" value="A">' .
-                '</label>' .
+        $raw = '<html><head><form>'.
+                '<label>Stuff'.
+                '<input type="text" name="a" value="A">'.
+                '</label>'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), 'A');
@@ -418,11 +453,11 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testGettingTextFieldByEnclosingLabelWithConflictingOtherFields()
     {
-        $raw = '<html><head><form>' .
-                '<label>Stuff' .
-                '<input type="text" name="a" value="A">' .
-                '</label>' .
-                '<input type="text" name="b" value="B">' .
+        $raw = '<html><head><form>'.
+                '<label>Stuff'.
+                '<input type="text" name="a" value="A">'.
+                '</label>'.
+                '<input type="text" name="b" value="B">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), 'A');
@@ -432,9 +467,9 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingTextFieldByExternalLabel()
     {
-        $raw = '<html><head><form>' .
-                '<label for="aaa">Stuff</label>' .
-                '<input id="aaa" type="text" name="a" value="A">' .
+        $raw = '<html><head><form>'.
+                '<label for="aaa">Stuff</label>'.
+                '<input id="aaa" type="text" name="a" value="A">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('Stuff')), 'A');
@@ -444,9 +479,9 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testReadingTextArea()
     {
-        $raw = '<html><head><form>' .
-                '<textarea name="a">aaa</textarea>' .
-                '<input type="submit">' .
+        $raw = '<html><head><form>'.
+                '<textarea name="a">aaa</textarea>'.
+                '<input type="submit">'.
                 '</form></head></html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), 'aaa');
@@ -454,37 +489,37 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testEntitiesAreDecodedInTextareaValue()
     {
-        $raw  = '<form><textarea name="a">&amp;\'&quot;&lt;&gt;</textarea></form>';
+        $raw = '<form><textarea name="a">&amp;\'&quot;&lt;&gt;</textarea></form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), '&\'"<>');
     }
 
     public function testNewlinesPreservedInTextArea()
     {
-        $raw  = "<form><textarea name=\"a\">hello\r\nworld</textarea></form>";
+        $raw = "<form><textarea name=\"a\">hello\r\nworld</textarea></form>";
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), "hello\r\nworld");
     }
 
     public function testWhitespacePreservedInTextArea()
     {
-        $raw  = '<form><textarea name="a">     </textarea></form>';
+        $raw = '<form><textarea name="a">     </textarea></form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), '     ');
     }
 
     public function testComplexWhitespaceInTextArea()
     {
-        $raw = "<html>\n" .
-                "    <head><title></title></head>\n" .
-                "    <body>\n" .
-                "        <form>\n" .
-                "            <label>Text area C\n" .
-                "                <textarea name='c'>\n" .
-                "                </textarea>\n" .
-                "            </label>\n" .
-                "        </form>\n" .
-                "    </body>\n" .
+        $raw = "<html>\n".
+                "    <head><title></title></head>\n".
+                "    <body>\n".
+                "        <form>\n".
+                "            <label>Text area C\n".
+                "                <textarea name='c'>\n".
+                "                </textarea>\n".
+                "            </label>\n".
+                "        </form>\n".
+                "    </body>\n".
                 '</html>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('c')), '                ');
@@ -492,9 +527,9 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingTextArea()
     {
-        $raw = '<form>' .
-                '<textarea name="a">aaa</textarea>' .
-                '<input type="submit">' .
+        $raw = '<form>'.
+                '<textarea name="a">aaa</textarea>'.
+                '<input type="submit">'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertTrue($page->setField(new SelectByName('a'), 'AAA'));
@@ -503,19 +538,19 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testDontIncludeTextAreaContentInLabel()
     {
-        $raw  = '<form><label>Text area C<textarea id=3 name="c">mouse</textarea></label></form>';
+        $raw = '<form><label>Text area C<textarea id=3 name="c">mouse</textarea></label></form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('Text area C')), 'mouse');
     }
 
     public function testSettingSelectionField()
     {
-        $raw = '<form>' .
-                '<select name="a">' .
-                '<option>aaa</option>' .
-                '<option selected>bbb</option>' .
-                '</select>' .
-                '<input type="submit">' .
+        $raw = '<form>'.
+                '<select name="a">'.
+                '<option>aaa</option>'.
+                '<option selected>bbb</option>'.
+                '</select>'.
+                '<input type="submit">'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), 'bbb');
@@ -526,11 +561,11 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSelectionOptionsAreNormalised()
     {
-        $raw = '<form>' .
-                '<select name="a">' .
-                '<option selected><b>Big</b> bold</option>' .
-                '<option>small <em>italic</em></option>' .
-                '</select>' .
+        $raw = '<form>'.
+                '<select name="a">'.
+                '<option selected><b>Big</b> bold</option>'.
+                '<option>small <em>italic</em></option>'.
+                '</select>'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('a')), 'Big bold');
@@ -590,10 +625,10 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingSelectionFieldByEnclosingLabel()
     {
-        $raw = '<form>' .
-                '<label>Stuff' .
-                '<select name="a"><option selected>A</option><option>B</option></select>' .
-                '</label>' .
+        $raw = '<form>'.
+                '<label>Stuff'.
+                '<select name="a"><option selected>A</option><option>B</option></select>'.
+                '</label>'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('Stuff')), 'A');
@@ -625,9 +660,9 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testSettingRadioButtonByEnclosingLabel()
     {
-        $raw = '<form>' .
-                '<label>A<input type="radio" name="r" value="a" checked></label>' .
-                '<label>B<input type="radio" name="r" value="b"></label>' .
+        $raw = '<form>'.
+                '<label>A<input type="radio" name="r" value="a" checked></label>'.
+                '<label>B<input type="radio" name="r" value="b"></label>'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('A')), 'a');
@@ -637,10 +672,10 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function testCanParseInputsWithAllKindsOfAttributeQuoting()
     {
-        $raw = '<form>' .
-                '<input type="checkbox" name=\'first\' value=one checked></input>' .
-                '<input type=checkbox name="second" value="two"></input>' .
-                '<input type=checkbox name="third" value=\'three\' checked="checked" />' .
+        $raw = '<form>'.
+                '<input type="checkbox" name=\'first\' value=one checked></input>'.
+                '<input type=checkbox name="second" value="two"></input>'.
+                '<input type=checkbox name="third" value=\'three\' checked="checked" />'.
                 '</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByName('first')), 'one');
@@ -655,8 +690,10 @@ abstract class TestOfParsing extends UnitTestCase
 
     public function assertSameFrameset($actual, $expected)
     {
-        $this->assertIdentical(array_map(array($this, 'urlToString'), $actual),
-                               array_map(array($this, 'urlToString'), $expected));
+        $this->assertIdentical(
+            array_map([$this, 'urlToString'], $actual),
+            array_map([$this, 'urlToString'], $expected)
+        );
     }
 }
 
@@ -674,14 +711,16 @@ class TestOfParsingUsingPhpParser extends TestOfParsing
 
     public function testNastyTitle()
     {
-        $page = $this->whenVisiting('http://host',
-                                    '<html><head><Title> <b>Me&amp;Me </TITLE></b></head></html>');
+        $page = $this->whenVisiting(
+            'http://host',
+            '<html><head><Title> <b>Me&amp;Me </TITLE></b></head></html>'
+        );
         $this->assertEqual($page->getTitle(), 'Me&Me');
     }
 
     public function testLabelShouldStopAtClosingLabelTag()
     {
-        $raw  = '<form><label>start<textarea id=3 name="c" wrap="hard">stuff</textarea>end</label>stuff</form>';
+        $raw = '<form><label>start<textarea id=3 name="c" wrap="hard">stuff</textarea>end</label>stuff</form>';
         $page = $this->whenVisiting('http://host', $raw);
         $this->assertEqual($page->getField(new SelectByLabel('startend')), 'stuff');
     }

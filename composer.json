@@ -1,6 +1,6 @@
 {
     "name": "simpletest/simpletest",
-    "description": "Unit testing, mock objects and web testing framework for PHP built around test cases.",
+    "description": "SimpleTest is a framework for unit testing, web site testing and mock objects for PHP.",
     "type": "library",
     "keywords": [
         "simpletest",
@@ -49,9 +49,15 @@
         }
     ],
     "require": {
-        "php": "^5.4 || ^7.0"
+        "php": "^7.1"
+    },
+    "require-dev" : {
+        "ext-dom": "*",
+        "ext-mbstring": "*",
+        "ext-tidy": "*"
     },
     "autoload": {
-        "classmap": ["."]
+        "classmap": ["src/"],
+        "exclude-from-classmap": [ "/test" ]
     }
 }

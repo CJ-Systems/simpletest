@@ -1,9 +1,9 @@
 <?php
 
-require_once __DIR__ . '/../../dumper.php';
-require_once __DIR__ . '/../../compatibility.php';
-require_once __DIR__ . '/../../test_case.php';
-require_once __DIR__ . '/../../expectation.php';
+require_once __DIR__ . '/../../src/dumper.php';
+require_once __DIR__ . '/../../src/compatibility.php';
+require_once __DIR__ . '/../../src/test_case.php';
+require_once __DIR__ . '/../../src/expectation.php';
 
 /**
  * Bridge Adapter for a PHPUnit test case class.
@@ -70,7 +70,7 @@ class PHPUnitTestCase extends SimpleTestCase
      * @param $second         Hopefully the same handle.
      * @param $message        Message to display.
      */
-    public function assertSame($first, $second, $message = '%s')
+    public function assertSame(&$first, &$second, $message = '%s')
     {
         $dumper  = new SimpleDumper();
         $message = sprintf(

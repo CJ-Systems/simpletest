@@ -1,14 +1,16 @@
 <?php
 
-require_once dirname(__FILE__) . '/../autorun.php';
+require_once __DIR__.'/../src/autorun.php';
 
 class ReferenceForTesting
 {
     private $reference;
+
     public function setReference(&$reference)
     {
         $this->reference = $reference;
     }
+
     public function &getReference()
     {
         return $this->reference;
@@ -92,11 +94,31 @@ class TestOfUnitTester extends UnitTestCase
         $this->assertCopy($a, $b);
     }
 
-    public function testEscapePercentageSignsExceptFirst()
+    public function testEscapeIncidentalPrintfSyntax()
     {
-        $a = 'http://www.domain.com/some%20long%%20name.html';
-        $b = $this->escapePercentageSignsExceptFirst('http://www.domain.com/some%20long%20name.html');
+        // Incidentals are escaped
+        $a = 'http://www.domain.com/some%%20long%%20name.html';
+        $b = $this->escapeIncidentalPrintfSyntax('http://www.domain.com/some%20long%20name.html');
+        $this->assertEqual($a, $b);
+
+        // Non-incidental is not escaped
+        $a = 'SimpleTest error: %s :-)';
+        $b = $this->escapeIncidentalPrintfSyntax('SimpleTest error: %s :-)');
+        $this->assertEqual($a, $b);
+
+        // Non-incidental is not escaped (end position edge case)
+        $a = 'SimpleTest error: %s';
+        $b = $this->escapeIncidentalPrintfSyntax('SimpleTest error: %s');
+        $this->assertEqual($a, $b);
+
+        // Non-incidental is not escaped (start position edge case)
+        $a = '%s (SimpleTest error)';
+        $b = $this->escapeIncidentalPrintfSyntax('%s (SimpleTest error)');
+        $this->assertEqual($a, $b);
+
+        // Correct escaping/preservation for both non-incidetal and incidentals
+        $a = '%s (%%SimpleTest error%%)';
+        $b = $this->escapeIncidentalPrintfSyntax('%s (%SimpleTest error%)');
         $this->assertEqual($a, $b);
     }
-
 }
